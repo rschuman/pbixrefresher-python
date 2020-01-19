@@ -3,9 +3,11 @@ import os
 import sys
 import argparse
 import psutil
-from pywinauto.application import Application
-from pywinauto import timings
+# from pywinauto.application import Application
+# from pywinauto import timings
 
+from datetime import datetime
+from pathlib import Path
 
 def type_keys(string, element):
     """Type a string char by char to Element window"""
@@ -20,79 +22,84 @@ def main():
 	parser.add_argument("--refresh-timeout", help = "refresh timeout", default = 30000, type = int)
 	parser.add_argument("--no-publish", dest='publish', help="don't publish, just save", default = True, action = 'store_false' )
 	parser.add_argument("--init-wait", help = "initial wait time on startup", default = 15, type = int)
+	parser.add_argument("--logfile", help = "File for logging output from this script", default = "")
 	args = parser.parse_args()
 
-	timings.after_clickinput_wait = 1
+	# timings.after_clickinput_wait = 1
 	WORKBOOK = args.workbook
 	WORKSPACE = args.workspace
 	INIT_WAIT = args.init_wait
 	REFRESH_TIMEOUT = args.refresh_timeout
+	LOGFILE_NAME = args.logfile
 
-	# Kill running PBI
-	PROCNAME = "PBIDesktop.exe"
-	for proc in psutil.process_iter():
-		# check whether the process name matches
-		if proc.name() == PROCNAME:
-			proc.kill()
-	time.sleep(3)
+	if len(LOGFILE_NAME) > 0:
+		print("got here!")
 
-	# Start PBI and open the workbook
-	print("Starting Power BI")
-	os.system('start "" "' + WORKBOOK + '"')
-	print("Waiting ",INIT_WAIT,"sec")
-	time.sleep(INIT_WAIT)
+	# # Kill running PBI
+	# PROCNAME = "PBIDesktop.exe"
+	# for proc in psutil.process_iter():
+	# 	# check whether the process name matches
+	# 	if proc.name() == PROCNAME:
+	# 		proc.kill()
+	# time.sleep(3)
 
-	# Connect pywinauto
-	print("Identifying Power BI window")
-	app = Application(backend = 'uia').connect(path = PROCNAME)
-	win = app.window(title_re = '.*Power BI Desktop')
-	time.sleep(5)
-	win.wait("enabled", timeout = 300)
-	win.Save.wait("enabled", timeout = 300)
-	win.set_focus()
-	win.Home.click_input()
-	win.Save.wait("enabled", timeout = 300)
-	win.wait("enabled", timeout = 300)
+	# # Start PBI and open the workbook
+	# print("Starting Power BI")
+	# os.system('start "" "' + WORKBOOK + '"')
+	# print("Waiting ",INIT_WAIT,"sec")
+	# time.sleep(INIT_WAIT)
 
-	# Refresh
-	print("Refreshing")
-	win.Refresh.click_input()
-	#wait_win_ready(win)
-	time.sleep(5)
-	print("Waiting for refresh end (timeout in ", REFRESH_TIMEOUT,"sec)")
-	win.wait("enabled", timeout = REFRESH_TIMEOUT)
+	# # Connect pywinauto
+	# print("Identifying Power BI window")
+	# app = Application(backend = 'uia').connect(path = PROCNAME)
+	# win = app.window(title_re = '.*Power BI Desktop')
+	# time.sleep(5)
+	# win.wait("enabled", timeout = 300)
+	# win.Save.wait("enabled", timeout = 300)
+	# win.set_focus()
+	# win.Home.click_input()
+	# win.Save.wait("enabled", timeout = 300)
+	# win.wait("enabled", timeout = 300)
 
-	# Save
-	print("Saving")
-	type_keys("%1", win)
-	#wait_win_ready(win)
-	time.sleep(5)
-	win.wait("enabled", timeout = REFRESH_TIMEOUT)
+	# # Refresh
+	# print("Refreshing")
+	# win.Refresh.click_input()
+	# #wait_win_ready(win)
+	# time.sleep(5)
+	# print("Waiting for refresh end (timeout in ", REFRESH_TIMEOUT,"sec)")
+	# win.wait("enabled", timeout = REFRESH_TIMEOUT)
 
-	# Publish
-	if args.publish:
-		print("Publish")
-		win.Publish.click_input()
-		publish_dialog = win.child_window(auto_id = "KoPublishToGroupDialog")
-		publish_dialog.child_window(title = WORKSPACE).click_input()
-		publish_dialog.Select.click()
-		try:
-			win.Replace.wait('visible', timeout = 10)
-		except Exception:
-			pass
-		if win.Replace.exists():
-			win.Replace.click_input()
-		win["Got it"].wait('visible', timeout = REFRESH_TIMEOUT)
-		win["Got it"].click_input()
+	# # Save
+	# print("Saving")
+	# type_keys("%1", win)
+	# #wait_win_ready(win)
+	# time.sleep(5)
+	# win.wait("enabled", timeout = REFRESH_TIMEOUT)
 
-	#Close
-	print("Exiting")
-	win.close()
+	# # Publish
+	# if args.publish:
+	# 	print("Publish")
+	# 	win.Publish.click_input()
+	# 	publish_dialog = win.child_window(auto_id = "KoPublishToGroupDialog")
+	# 	publish_dialog.child_window(title = WORKSPACE).click_input()
+	# 	publish_dialog.Select.click()
+	# 	try:
+	# 		win.Replace.wait('visible', timeout = 10)
+	# 	except Exception:
+	# 		pass
+	# 	if win.Replace.exists():
+	# 		win.Replace.click_input()
+	# 	win["Got it"].wait('visible', timeout = REFRESH_TIMEOUT)
+	# 	win["Got it"].click_input()
 
-	# Force close
-	for proc in psutil.process_iter():
-		if proc.name() == PROCNAME:
-			proc.kill()
+	# #Close
+	# print("Exiting")
+	# win.close()
+
+	# # Force close
+	# for proc in psutil.process_iter():
+	# 	if proc.name() == PROCNAME:
+	# 		proc.kill()
 
 		
 if __name__ == '__main__':
